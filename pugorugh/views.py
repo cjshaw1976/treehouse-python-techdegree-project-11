@@ -6,7 +6,7 @@ from rest_framework import permissions
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import list_route, detail_route
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
 from . import serializers
@@ -27,7 +27,8 @@ class UserPrefView(mixins.RetrieveModelMixin,
 
     @list_route(methods=['get', 'put'])
     def preferences(self, request, pk=None):
-        pref = models.UserPref.objects.filter(user_id=request.user.id)[:1].get()
+        pref = models.UserPref.objects.filter(
+            user_id=request.user.id)[:1].get()
 
         if request.method == 'PUT':
             pref.age = request.data.get('age')
@@ -38,6 +39,7 @@ class UserPrefView(mixins.RetrieveModelMixin,
         serializer = serializers.UserPrefSerializer(pref)
         return Response(serializer.data)
 
+
 class DogView(viewsets.ModelViewSet):
     queryset = models.Dog.objects.all()
     serializer_class = serializers.DogSerializer
@@ -45,21 +47,15 @@ class DogView(viewsets.ModelViewSet):
     @detail_route(methods=['put'], url_path="(?P<dl>[^/.]+)")
     def changed(self, request, pk=None, dl=None):
         user = request.user
-        obj = models.UserDog.objects.filter(user=user, dog_id=pk).delete()
+        models.UserDog.objects.filter(user=user, dog_id=pk).delete()
 
         if dl == 'liked':
-            obj = models.UserDog.objects.create(user=user,
-                                                dog_id=pk,
-                                                status='l')
+            models.UserDog.objects.create(user=user, dog_id=pk, status='l')
 
         elif dl == 'disliked':
-            obj = models.UserDog.objects.create(user=user,
-                                                dog_id=pk,
-                                                status='d')
+            models.UserDog.objects.create(user=user, dog_id=pk, status='d')
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
     @detail_route(methods=['get'], url_path="(?P<dl>[^/.]+)/next")
     def liked(self, request, pk=None, dl=None):
@@ -72,33 +68,40 @@ class DogView(viewsets.ModelViewSet):
                 age_range.append(i)
 
         if 'y' in user_pref.age:
-            for i in range(10,19):
+            for i in range(10, 19):
                 age_range.append(i)
 
         if 'a' in user_pref.age:
-            for i in range(19,49):
+            for i in range(19, 49):
                 age_range.append(i)
 
         if 's' in user_pref.age:
-            for i in range(49,100):
+            for i in range(49, 100):
                 age_range.append(i)
 
         bqs = models.Dog.objects.filter(Q(gender__in=user_pref.gender),
                                         Q(age__in=age_range),
-                                        Q(size__in=user_pref.size),
-                                        Q(userdog__user=user.id))
+                                        Q(size__in=user_pref.size))
 
         if dl == 'liked':
-            dog = bqs.filter(Q(id__gt=pk), Q(userdog__status='l'))[:1]
+            dog = bqs.filter(Q(id__gt=pk),
+                             Q(userdog__status='l'),
+                             Q(userdog__user=user.id))[:1]
 
             if not dog and int(pk) > 0:
-                dog = bqs.filter(Q(id__gt=-1), Q(userdog__status='l'))[:1]
+                dog = bqs.filter(Q(id__gt=-1),
+                                 Q(userdog__status='l'),
+                                 Q(userdog__user=user.id))[:1]
 
         elif dl == 'disliked':
-            dog = bqs.filter(Q(id__gt=pk), Q(userdog__status='d'))[:1]
+            dog = bqs.filter(Q(id__gt=pk),
+                             Q(userdog__status='d'),
+                             Q(userdog__user=user.id))[:1]
 
             if not dog and int(pk) > 0:
-                dog = bqs.filter(Q(id__gt=-1), Q(userdog__status='d'))[:1]
+                dog = bqs.filter(Q(id__gt=-1),
+                                 Q(userdog__status='d'),
+                                 Q(userdog__user=user.id))[:1]
 
         else:
             dog = bqs.filter(Q(id__gt=pk), ~Q(userdog__user=user.id))[:1]

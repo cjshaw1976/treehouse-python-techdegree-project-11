@@ -11,22 +11,6 @@ class Dog(models.Model):
     gender = models.CharField(max_length=1)
     size = models.CharField(max_length=2)
 
-    def _get_age_range(self):
-        """
-        Turn the age into a range.
-        """
-        if self.age < 9:
-            return 'b'
-
-        if self.age < 18:
-            return 'y'
-
-        if self.age < 48:
-            return 'a'
-
-        return 's'
-
-    age_range = property(_get_age_range)
 
 class UserDog(models.Model):
     user = models.ForeignKey(User)
@@ -38,7 +22,9 @@ class UserDog(models.Model):
 
 
 class UserPref(models.Model):
-    user = models.OneToOneField(User, related_name='preferences')
+    user = models.OneToOneField(User,
+                                related_name='preferences',
+                                on_delete=models.CASCADE)
     age = models.CharField(max_length=16, default='b,y,a,s')
     gender = models.CharField(max_length=16, default='m,f')
     size = models.CharField(max_length=16, default='s,m,l,xl')

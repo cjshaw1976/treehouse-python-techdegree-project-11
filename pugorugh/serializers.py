@@ -26,8 +26,9 @@ class DogSerializer(serializers.ModelSerializer):
         model = models.Dog
         fields = '__all__'
 
+
 class UserPrefSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.UserPref
-        exclude =('user',)
+        exclude = ('user',)
